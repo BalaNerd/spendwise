@@ -15,7 +15,7 @@ export function Card({ children, className }: CardProps) {
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3 }}
       className={cn(
-        'rounded-xl border border-neutral-800 bg-neutral-900/50 p-6',
+        'rounded-xl border border-border bg-card/80 text-card-foreground p-6 shadow-sm shadow-black/5 dark:shadow-black/30 transition-colors duration-300',
         className
       )}
     >
@@ -29,9 +29,9 @@ export function CardHeader({ children, className }: CardProps) {
 }
 
 export function CardTitle({ children, className }: CardProps) {
-  return <h3 className={cn('text-lg font-semibold text-white', className)}>{children}</h3>;
+  return <h3 className={cn('text-lg font-semibold text-foreground', className)}>{children}</h3>;
 }
 
 export function CardDescription({ children, className }: CardProps) {
-  return <p className={cn('text-sm text-neutral-400 mt-1', className)}>{children}</p>;
+  return <p className={cn('text-sm text-muted-foreground mt-1', className)}>{children}</p>;
 }

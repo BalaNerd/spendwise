@@ -64,7 +64,7 @@ export function AddSubscriptionForm({
     setLoading(true);
     try {
       if (isEdit && editingSubscription) {
-        await api.put(`/api/subscriptions/${editingSubscription.id}`, {
+        await api.put(`subscriptions/${editingSubscription.id}`, {
           name: form.name,
           amount: parseFloat(form.amount),
           billing_cycle: form.billing_cycle,
@@ -72,7 +72,7 @@ export function AddSubscriptionForm({
           is_active: form.is_active,
         });
       } else {
-        await api.post('/api/subscriptions', {
+        await api.post('subscriptions', {
           name: form.name,
           amount: parseFloat(form.amount),
           billing_cycle: form.billing_cycle,
@@ -90,7 +90,7 @@ export function AddSubscriptionForm({
   return (
     <>
       {!isEdit && (
-        <Button onClick={() => setOpen(true)} size="sm">
+        <Button onClick={() => setOpen(true)} size="sm" className="w-full sm:w-auto">
           Add subscription
         </Button>
       )}
@@ -108,38 +108,41 @@ export function AddSubscriptionForm({
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.95 }}
               onClick={(e) => e.stopPropagation()}
-              className="w-full max-w-md rounded-xl border border-neutral-800 bg-neutral-900 p-6"
+              className="w-full max-w-md rounded-xl border border-border bg-card p-6 text-card-foreground shadow-lg shadow-black/10 dark:shadow-black/40 transition-colors duration-300"
             >
-              <h3 className="text-lg font-semibold text-white">
+              <h3 className="text-lg font-semibold text-foreground">
                 {isEdit ? 'Edit subscription' : 'Add subscription'}
               </h3>
               <form onSubmit={handleSubmit} className="mt-6 space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-neutral-400 mb-2">Name</label>
+                  <label htmlFor="sub-name" className="block text-sm font-medium text-muted-foreground mb-2">Name</label>
                   <input
+                    id="sub-name"
                     type="text"
                     required
                     value={form.name}
                     onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
                     placeholder="Netflix, Spotify..."
-                    className="w-full rounded-lg border border-neutral-700 bg-neutral-800 px-4 py-3 text-white placeholder-neutral-500"
+                    className="w-full rounded-lg border border-border bg-background px-4 py-3 text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-foreground/20 transition-colors duration-300"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-neutral-400 mb-2">Amount</label>
+                  <label htmlFor="sub-amount" className="block text-sm font-medium text-muted-foreground mb-2">Amount</label>
                   <input
+                    id="sub-amount"
                     type="number"
                     step="0.01"
                     min="0"
                     required
                     value={form.amount}
                     onChange={(e) => setForm((f) => ({ ...f, amount: e.target.value }))}
-                    className="w-full rounded-lg border border-neutral-700 bg-neutral-800 px-4 py-3 text-white"
+                    className="w-full rounded-lg border border-border bg-background px-4 py-3 text-foreground focus:outline-none focus:ring-1 focus:ring-foreground/20 transition-colors duration-300"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-neutral-400 mb-2">Billing cycle</label>
+                  <label htmlFor="sub-cycle" className="block text-sm font-medium text-muted-foreground mb-2">Billing cycle</label>
                   <select
+                    id="sub-cycle"
                     value={form.billing_cycle}
                     onChange={(e) =>
                       setForm((f) => ({
@@ -147,19 +150,20 @@ export function AddSubscriptionForm({
                         billing_cycle: e.target.value as 'monthly' | 'yearly',
                       }))
                     }
-                    className="w-full rounded-lg border border-neutral-700 bg-neutral-800 px-4 py-3 text-white"
+                    className="w-full rounded-lg border border-border bg-background px-4 py-3 text-foreground focus:outline-none focus:ring-1 focus:ring-foreground/20 transition-colors duration-300"
                   >
                     <option value="monthly">Monthly</option>
                     <option value="yearly">Yearly</option>
                   </select>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-neutral-400 mb-2">Last activity</label>
+                  <label htmlFor="sub-last-activity" className="block text-sm font-medium text-muted-foreground mb-2">Last activity</label>
                   <input
+                    id="sub-last-activity"
                     type="date"
                     value={form.last_activity_date}
                     onChange={(e) => setForm((f) => ({ ...f, last_activity_date: e.target.value }))}
-                    className="w-full rounded-lg border border-neutral-700 bg-neutral-800 px-4 py-3 text-white"
+                    className="w-full rounded-lg border border-border bg-background px-4 py-3 text-foreground focus:outline-none focus:ring-1 focus:ring-foreground/20 transition-colors duration-300"
                   />
                 </div>
                 {isEdit && (
@@ -168,9 +172,9 @@ export function AddSubscriptionForm({
                       type="checkbox"
                       checked={form.is_active}
                       onChange={(e) => setForm((f) => ({ ...f, is_active: e.target.checked }))}
-                      className="rounded border-neutral-600"
+                      className="rounded border-border bg-background"
                     />
-                    <span className="text-sm text-neutral-400">Active</span>
+                    <span className="text-sm text-muted-foreground">Active</span>
                   </label>
                 )}
                 <div className="flex gap-3 pt-2">

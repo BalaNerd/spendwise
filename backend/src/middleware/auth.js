@@ -3,25 +3,37 @@
  */
 
 import jwt from 'jsonwebtoken';
-import { createClient } from '@supabase/supabase-js';
+export { createUserClient } from '../utils/supabase.js';
 
 /**
- * Create Supabase client scoped to authenticated user.
- * Reads env at call time so dotenv has already run.
+ * Verify Supabase JWT token
  */
-export function createUserClient(token) {
-  const url = process.env.SUPABASE_URL;
-  const key = process.env.SUPABASE_ANON_KEY;
-  if (!url || !key) {
-    throw new Error('Supabase URL and Anon Key are required');
-  }
-  return createClient(url, key, {
-    global: {
-      headers: {
-        Authorization: `Bearer ${token}`
+function verifySupabaseJWT(token) {
+  try {
+    // Get Supabase JWT secret from environment
+    const jwtSecret = process.env.SUPABASE_JWT_SECRET;
+    if (!jwtSecret) {
+      // Fallback: decode only (less secure but functional)
+      console.warn('SUPABASE_JWT_SECRET not found, falling back to decode-only');
+      const decoded = jwt.decode(token);
+      if (!decoded || !decoded.sub) {
+        throw new Error('Invalid token structure');
       }
+      return decoded;
     }
-  });
+
+    // Verify token signature and expiration
+    const decoded = jwt.verify(token, jwtSecret);
+    return decoded;
+  } catch (error) {
+    if (error.name === 'TokenExpiredError') {
+      throw new Error('Token expired');
+    } else if (error.name === 'JsonWebTokenError') {
+      throw new Error('Invalid token signature');
+    } else {
+      throw new Error('Token validation failed');
+    }
+  }
 }
 
 /**
@@ -40,13 +52,21 @@ export function requireAuth(req, res, next) {
   const token = authHeader.split(' ')[1];
 
   try {
-    // Supabase JWT → decode is enough
-    const decoded = jwt.decode(token);
+    // Verify Supabase JWT (not just decode!)
+    const decoded = verifySupabaseJWT(token);
 
     if (!decoded || !decoded.sub) {
       return res.status(401).json({
         error: 'Unauthorized',
         message: 'Invalid token'
+      });
+    }
+
+    // Check token expiration
+    if (decoded.exp && decoded.exp < Math.floor(Date.now() / 1000)) {
+      return res.status(401).json({
+        error: 'Unauthorized',
+        message: 'Token expired'
       });
     }
 
@@ -63,7 +83,7 @@ export function requireAuth(req, res, next) {
   } catch (err) {
     return res.status(401).json({
       error: 'Unauthorized',
-      message: 'Token validation failed'
+      message: err.message || 'Token validation failed'
     });
   }
 }

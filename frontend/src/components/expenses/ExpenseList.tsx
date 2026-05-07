@@ -6,6 +6,7 @@ import { api } from '@/lib/api';
 import { formatCurrency, formatShortDate } from '@/lib/utils';
 import { AddExpenseForm, type ExpenseForForm } from './AddExpenseForm';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
+import { useTheme } from 'next-themes';
 
 type Expense = ExpenseForForm & {
   expense_categories?: { id: string; name: string; color?: string } | null;
@@ -19,6 +20,8 @@ type ExpenseListProps = {
 };
 
 export function ExpenseList({ month, refreshKey = 0, onRefresh, currency = 'INR' }: ExpenseListProps) {
+  const { resolvedTheme } = useTheme();
+  const isDark = resolvedTheme === 'dark';
   const [expenses, setExpenses] = useState<Expense[]>([]);
   const [loading, setLoading] = useState(true);
   const [editingExpense, setEditingExpense] = useState<ExpenseForForm | null>(null);
@@ -29,7 +32,7 @@ export function ExpenseList({ month, refreshKey = 0, onRefresh, currency = 'INR'
   const loadExpenses = useCallback(() => {
     setLoading(true);
     api
-      .get<Expense[]>(`/api/expenses?month=${month}&limit=200`)
+      .get<Expense[]>(`expenses?month=${month}&limit=200`)
       .then(setExpenses)
       .catch(() => setExpenses([]))
       .finally(() => setLoading(false));
@@ -40,7 +43,7 @@ export function ExpenseList({ month, refreshKey = 0, onRefresh, currency = 'INR'
   }, [loadExpenses, refreshKey]);
 
   const handleUpdateExpense = async (id: string, data: Record<string, unknown>) => {
-    await api.put(`/api/expenses/${id}`, data);
+    await api.put(`expenses/${id}`, data);
     setEditingExpense(null);
     loadExpenses();
     onRefresh();
@@ -50,7 +53,7 @@ export function ExpenseList({ month, refreshKey = 0, onRefresh, currency = 'INR'
     if (!deleteTarget) return;
     setDeleteLoading(true);
     try {
-      await api.delete(`/api/expenses/${deleteTarget.id}`);
+      await api.delete(`expenses/${deleteTarget.id}`);
       setDeleteTarget(null);
       loadExpenses();
       onRefresh();
@@ -71,21 +74,23 @@ export function ExpenseList({ month, refreshKey = 0, onRefresh, currency = 'INR'
     <>
       <div className="space-y-4">
         <div className="flex flex-wrap items-center justify-between gap-2">
-          <h3 className="text-lg font-semibold text-white">Recent expenses</h3>
-          <input
-            type="search"
-            placeholder="Search by description or category..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="rounded-lg border border-neutral-700 bg-neutral-800 px-3 py-2 text-sm text-white placeholder-neutral-500 w-56 max-w-full"
-          />
+          <h3 className={`text-lg font-semibold ${isDark ? 'text-white' : 'text-slate-900'}`}>Recent expenses</h3>
+          <div className="flex items-center gap-4 mb-6">
+            <input
+              type="text"
+              placeholder="Search expenses..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className={`rounded-lg border px-3 py-2 text-sm placeholder-gray-500 w-56 max-w-full ${isDark ? 'border-neutral-700 bg-neutral-800 text-white placeholder-neutral-500' : 'border-slate-200 bg-white text-slate-900 placeholder-slate-500'}`}
+            />
+          </div>
         </div>
         {loading ? (
           <div className="flex justify-center py-8">
-            <div className="animate-spin h-6 w-6 border-2 border-neutral-600 border-t-white rounded-full" />
+            <div className={`animate-spin h-6 w-6 border-2 ${isDark ? 'border-neutral-600 border-t-white' : 'border-slate-300 border-t-slate-900'} rounded-full`} />
           </div>
         ) : filtered.length === 0 ? (
-          <p className="py-6 text-center text-neutral-500 text-sm">
+          <p className={`py-6 text-center text-sm ${isDark ? 'text-neutral-500' : 'text-slate-500'}`}>
             {search ? 'No expenses match your search.' : 'No expenses this month. Add one above.'}
           </p>
         ) : (
@@ -93,7 +98,7 @@ export function ExpenseList({ month, refreshKey = 0, onRefresh, currency = 'INR'
             {filtered.map((exp, i) => (
               <li
                 key={exp.id}
-                className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-neutral-800 bg-neutral-800/30 px-4 py-3"
+                className={`flex flex-wrap items-center justify-between gap-2 rounded-lg border px-4 py-3 ${isDark ? 'border-neutral-800 bg-neutral-800/30' : 'border-slate-200 bg-white hover:bg-slate-50'}`}
               >
                 <motion.div
                   initial={{ opacity: 0, x: -8 }}
@@ -101,17 +106,17 @@ export function ExpenseList({ month, refreshKey = 0, onRefresh, currency = 'INR'
                   transition={{ delay: i * 0.02 }}
                   className="flex items-center gap-3 min-w-0 flex-1"
                 >
-                  <span className="text-lg font-semibold text-white shrink-0">
+                  <span className={`text-lg font-semibold shrink-0 ${isDark ? 'text-white' : 'text-slate-900'}`}>
                     {formatCurrency(Number(exp.amount), currency)}
                   </span>
-                  <span className="text-neutral-400 text-sm shrink-0">
+                  <span className={`text-sm shrink-0 ${isDark ? 'text-neutral-400' : 'text-slate-500'}`}>
                     {formatShortDate(exp.date)}
                   </span>
-                  <span className="text-neutral-300 truncate">
+                  <span className={`truncate ${isDark ? 'text-neutral-300' : 'text-slate-700'}`}>
                     {exp.expense_categories?.name || 'Uncategorized'}
                   </span>
                   {exp.description && (
-                    <span className="text-neutral-500 text-sm truncate hidden sm:block">
+                    <span className={`text-sm truncate hidden sm:block ${isDark ? 'text-neutral-500' : 'text-slate-500'}`}>
                       {exp.description}
                     </span>
                   )}
@@ -125,7 +130,7 @@ export function ExpenseList({ month, refreshKey = 0, onRefresh, currency = 'INR'
                   <button
                     type="button"
                     onClick={() => setEditingExpense(exp)}
-                    className="rounded px-2 py-1.5 text-sm text-neutral-400 hover:text-white hover:bg-neutral-700"
+                    className={`rounded px-2 py-1.5 text-sm ${isDark ? 'text-neutral-400 hover:text-white hover:bg-neutral-700' : 'text-slate-500 hover:text-slate-700 hover:bg-slate-100'}`}
                     aria-label="Edit"
                   >
                     Edit
@@ -133,7 +138,7 @@ export function ExpenseList({ month, refreshKey = 0, onRefresh, currency = 'INR'
                   <button
                     type="button"
                     onClick={() => setDeleteTarget(exp)}
-                    className="rounded px-2 py-1.5 text-sm text-red-400 hover:text-red-300 hover:bg-red-500/10"
+                    className={`rounded px-2 py-1.5 text-sm ${isDark ? 'text-red-400 hover:text-red-300 hover:bg-red-500/10' : 'text-red-600 hover:text-red-700 hover:bg-red-50'}`}
                     aria-label="Delete"
                   >
                     Delete

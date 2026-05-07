@@ -43,10 +43,10 @@ export function ConfirmDialog({
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.95 }}
             onClick={(e) => e.stopPropagation()}
-            className="w-full max-w-sm rounded-xl border border-neutral-800 bg-neutral-900 p-6"
+            className="w-full max-w-sm rounded-xl border border-border bg-card p-6 text-card-foreground shadow-lg shadow-black/10 dark:shadow-black/40 transition-colors duration-300"
           >
-            <h3 className="text-lg font-semibold text-white">{title}</h3>
-            <p className="mt-2 text-sm text-neutral-400">{message}</p>
+            <h3 className="text-lg font-semibold text-foreground">{title}</h3>
+            <p className="mt-2 text-sm text-muted-foreground">{message}</p>
             <div className="mt-6 flex gap-3 justify-end">
               <Button type="button" variant="ghost" onClick={onCancel}>
                 Cancel
@@ -54,7 +54,7 @@ export function ConfirmDialog({
               <Button
                 type="button"
                 variant={variant === 'danger' ? 'primary' : 'secondary'}
-                className={variant === 'danger' ? 'bg-red-600 hover:bg-red-700' : ''}
+                className={variant === 'danger' ? 'bg-red-600 text-white hover:bg-red-700 focus:ring-red-500/30' : ''}
                 onClick={handleConfirm}
                 isLoading={loading}
               >

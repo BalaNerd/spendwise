@@ -1,4 +1,10 @@
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || '';
+const API_BASE = (process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000/api').replace(/\/+$/, '');
+
+function buildApiUrl(path: string) {
+  // Support callers passing either "users/me" or "/users/me"
+  const clean = String(path || '').replace(/^\/+/, '');
+  return clean ? `${API_BASE}/${clean}` : API_BASE;
+}
 
 async function getAuthHeaders(): Promise<Record<string, string>> {
   if (typeof window === 'undefined') return {};
@@ -16,24 +22,50 @@ async function getAuthHeaders(): Promise<Record<string, string>> {
 }
 
 export async function fetchApi(path: string, options?: RequestInit) {
-  const auth = await getAuthHeaders();
-  const res = await fetch(`${API_BASE}${path}`, {
-    headers: {
-      'Content-Type': 'application/json',
-      ...auth,
-      ...(options?.headers as Record<string, string>),
-    },
-    ...options,
-  });
+  const fullUrl = buildApiUrl(path);
 
-  if (!res.ok) {
-    const errBody = await res.json().catch(() => ({}));
-    throw new Error((errBody as { error?: string; message?: string }).message || (errBody as { error?: string }).error || 'API error');
+  try {
+    const auth = await getAuthHeaders();
+
+    const res = await fetch(fullUrl, {
+      headers: {
+        'Content-Type': 'application/json',
+        ...auth,
+        ...(options?.headers as Record<string, string>),
+      },
+      ...options,
+    });
+
+    if (!res.ok) {
+      let errBody;
+      try {
+        errBody = await res.json();
+      } catch {
+        errBody = {};
+      }
+      const errorMessage = (errBody as { error?: string; message?: string }).message || (errBody as { error?: string }).error || 'API error';
+      throw new Error(errorMessage);
+    }
+
+    const contentType = res.headers.get('content-type');
+    if (contentType?.includes('application/json')) {
+      try {
+        return await res.json();
+      } catch (error) {
+        throw new Error('Invalid JSON response from server');
+      }
+    }
+    return res;
+  } catch (error) {
+    // Provide specific troubleshooting based on error type
+    if (error instanceof TypeError) {
+      if (error.message.includes('Failed to fetch')) {
+        throw new Error('Network connection failed. Please check:\n1. Backend server is running on http://localhost:4000\n2. No firewall blocking the connection\n3. Browser network settings allow localhost connections');
+      }
+    }
+    
+    throw new Error(`Network error: ${error instanceof Error ? error.message : 'Unknown error'}`);
   }
-
-  const contentType = res.headers.get('content-type');
-  if (contentType?.includes('application/json')) return res.json();
-  return res;
 }
 
 const api = {

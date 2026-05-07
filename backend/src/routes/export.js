@@ -35,7 +35,7 @@ router.get('/expenses', async (req, res) => {
         [
           e.date,
           e.amount,
-          e.expense_categories?.name || '',
+          e.expense_categories?.name || 'Uncategorized',
           (e.description || '').replace(/"/g, '""'),
           e.recurring ? 'Yes' : 'No'
         ].join(',')

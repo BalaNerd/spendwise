@@ -13,20 +13,47 @@ export default function LoginPage() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [statusMessage, setStatusMessage] = useState<string | null>(null);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
     setIsLoading(true);
+    setStatusMessage('Signing you in securely. This can take a few seconds…');
 
     try {
       const supabase = createClient();
-      const { error } = await supabase.auth.signInWithPassword({ email, password });
-      if (error) throw error;
+      
+      // Add timeout handling
+      const signInPromise = supabase.auth.signInWithPassword({ 
+        email, 
+        password 
+      });
+      
+      const timeoutPromise = new Promise((_, reject) => {
+        setTimeout(() => reject(new Error('Request timeout')), 10000);
+      });
+
+      const result = await Promise.race([signInPromise, timeoutPromise]) as { error?: { message: string } };
+      
+      if (result.error) {
+        if (result.error.message.includes('Failed to fetch')) {
+          throw new Error('Network error. Please check your internet connection.');
+        }
+        if (result.error.message.includes('Invalid login credentials')) {
+          throw new Error('Invalid email or password.');
+        }
+        throw new Error(result.error.message);
+      }
+      
+      setStatusMessage('Login successful. Redirecting to your dashboard…');
       router.push('/dashboard');
       router.refresh();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Something went wrong');
+      const errorMessage = err instanceof Error ? err.message : 'Something went wrong';
+      setError(errorMessage);
+      setStatusMessage(null);
+      console.error('Login error:', err);
     } finally {
       setIsLoading(false);
     }
@@ -55,6 +82,11 @@ export default function LoginPage() {
               <div className="rounded-lg bg-red-500/10 px-4 py-3 text-sm text-red-400">
                 {error}
               </div>
+            )}
+            {statusMessage && !error && (
+              <p className="text-sm text-neutral-400">
+                {statusMessage}
+              </p>
             )}
             <div>
               <label htmlFor="email" className="block text-sm font-medium text-neutral-300 mb-2">

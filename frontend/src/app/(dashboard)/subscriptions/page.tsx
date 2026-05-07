@@ -23,8 +23,8 @@ export default function SubscriptionsPage() {
   const refresh = useCallback(() => {
     setLoading(true);
     Promise.all([
-      api.get<Subscription[]>('/api/subscriptions'),
-      api.get<{ currency?: string }>('/api/users/me').catch(() => ({ currency: 'INR' })),
+      api.get<Subscription[]>('subscriptions'),
+      api.get<{ currency?: string }>('users/me').catch(() => ({ currency: 'INR' })),
     ])
       .then(([subs, user]) => {
         setSubscriptions(subs);
@@ -42,7 +42,7 @@ export default function SubscriptionsPage() {
     if (!deleteTarget) return;
     setDeleteLoading(true);
     try {
-      await api.delete(`/api/subscriptions/${deleteTarget.id}`);
+      await api.delete(`subscriptions/${deleteTarget.id}`);
       setDeleteTarget(null);
       refresh();
     } finally {
@@ -61,44 +61,38 @@ export default function SubscriptionsPage() {
   const activeSubs = subscriptions.filter((s) => s.is_active);
   const inactiveSubs = subscriptions.filter((s) => !s.is_active);
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <div className="animate-spin h-8 w-8 border-2 border-neutral-600 border-t-white rounded-full" />
-      </div>
-    );
-  }
-
   return (
     <div className="space-y-8">
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-semibold text-white">Subscription Intelligence</h1>
-          <p className="mt-1 text-neutral-400">
+          <h1 className="text-2xl md:text-3xl font-semibold text-foreground">Subscription Intelligence</h1>
+          <p className="mt-1 text-sm text-muted-foreground md:text-base">
             Track recurring services — edit or delete any entry
           </p>
         </div>
         <AddSubscriptionForm
+          // full width button on mobile
+          // (implemented inside form component)
           onSuccess={refresh}
           editingSubscription={editingSubscription}
           setEditingSubscription={setEditingSubscription}
         />
       </div>
 
-      <div className="grid gap-6 sm:grid-cols-2">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <Card>
           <CardHeader>
             <CardTitle>Monthly cost</CardTitle>
             <CardDescription>All active subscriptions (monthly equivalent)</CardDescription>
           </CardHeader>
-          <p className="text-3xl font-semibold text-white">{formatCurrency(monthlyTotal, currency)}</p>
+          <p className="text-3xl font-semibold text-foreground">{formatCurrency(monthlyTotal, currency)}</p>
         </Card>
         <Card>
           <CardHeader>
             <CardTitle>Yearly cost</CardTitle>
             <CardDescription>Annual equivalent</CardDescription>
           </CardHeader>
-          <p className="text-3xl font-semibold text-white">{formatCurrency(yearlyTotal, currency)}</p>
+          <p className="text-3xl font-semibold text-foreground">{formatCurrency(yearlyTotal, currency)}</p>
         </Card>
       </div>
 
@@ -128,11 +122,11 @@ export default function SubscriptionsPage() {
                   initial={{ opacity: 0, y: 8 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: i * 0.05 }}
-                  className="flex flex-wrap items-center justify-between gap-4 rounded-lg border border-neutral-800 bg-neutral-800/30 p-4"
+                  className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 rounded-lg border border-border bg-card/70 p-4 sm:p-5"
                 >
                   <div>
-                    <h4 className="font-medium text-white">{sub.name}</h4>
-                    <p className="text-sm text-neutral-400">
+                    <h4 className="font-medium text-foreground">{sub.name}</h4>
+                    <p className="text-sm text-muted-foreground">
                       {formatCurrency(sub.amount, currency)}/{sub.billing_cycle}
                       {sub.last_activity_date && (
                         <span className="ml-2">
@@ -141,8 +135,8 @@ export default function SubscriptionsPage() {
                       )}
                     </p>
                   </div>
-                  <div className="flex items-center gap-3">
-                    <span className="text-lg font-semibold text-white">
+                  <div className="flex flex-wrap items-center gap-3">
+                    <span className="text-lg font-semibold text-foreground">
                       {formatCurrency(monthlyAmount, currency)}/mo
                     </span>
                     {isLowValue && (
@@ -153,14 +147,14 @@ export default function SubscriptionsPage() {
                     <button
                       type="button"
                       onClick={() => setEditingSubscription(sub)}
-                      className="rounded px-2 py-1.5 text-sm text-neutral-400 hover:text-white hover:bg-neutral-700"
+                      className="rounded px-2 py-1.5 text-sm text-muted-foreground hover:text-foreground hover:bg-accent/60"
                     >
                       Edit
                     </button>
                     <button
                       type="button"
                       onClick={() => setDeleteTarget(sub)}
-                      className="rounded px-2 py-1.5 text-sm text-red-400 hover:text-red-300 hover:bg-red-500/10"
+                      className="rounded px-2 py-1.5 text-sm text-red-500 hover:text-red-400 hover:bg-red-500/10"
                     >
                       Delete
                     </button>
@@ -186,26 +180,26 @@ export default function SubscriptionsPage() {
             {inactiveSubs.map((sub) => (
               <div
                 key={sub.id}
-                className="flex flex-wrap items-center justify-between gap-4 rounded-lg border border-neutral-800 bg-neutral-800/20 p-4 opacity-80"
+                className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 rounded-lg border border-border bg-card/60 p-4 opacity-80"
               >
                 <div>
-                  <h4 className="font-medium text-neutral-400">{sub.name}</h4>
-                  <p className="text-sm text-neutral-500">
+                  <h4 className="font-medium text-muted-foreground">{sub.name}</h4>
+                  <p className="text-sm text-muted-foreground">
                     {formatCurrency(sub.amount, currency)}/{sub.billing_cycle}
                   </p>
                 </div>
-                <div className="flex items-center gap-2">
+                <div className="flex flex-wrap items-center gap-2">
                   <button
                     type="button"
                     onClick={() => setEditingSubscription(sub)}
-                    className="rounded px-2 py-1.5 text-sm text-neutral-400 hover:text-white"
+                    className="rounded px-2 py-1.5 text-sm text-muted-foreground hover:text-foreground hover:bg-accent/60"
                   >
                     Edit
                   </button>
                   <button
                     type="button"
                     onClick={() => setDeleteTarget(sub)}
-                    className="rounded px-2 py-1.5 text-sm text-red-400 hover:text-red-300"
+                    className="rounded px-2 py-1.5 text-sm text-red-500 hover:text-red-400"
                   >
                     Delete
                   </button>

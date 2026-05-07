@@ -6,17 +6,28 @@ export function cn(...args: (string | undefined | null | false)[]): string {
     .join(' ');
 }
 
-const CURRENCY_SYMBOLS: Record<string, string> = {
-  USD: '$',
-  EUR: '€',
-  GBP: '£',
-  INR: '₹',
-  JPY: '¥',
-};
-
+/**
+ * Currency formatter
+ * Uses Intl.NumberFormat and user-selected currency code.
+ * Falls back gracefully if the currency code is invalid.
+ */
 export function formatCurrency(amount: number, currency: string = 'INR') {
-  const symbol = CURRENCY_SYMBOLS[currency] || currency + ' ';
-  return `${symbol}${Number(amount).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',')}`;
+  const value = Number.isFinite(amount) ? Number(amount) : 0;
+
+  const format = (code: string) =>
+    new Intl.NumberFormat(undefined, {
+      style: 'currency',
+      currency: code,
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    }).format(value);
+
+  try {
+    return format(currency);
+  } catch {
+    // Fallback to USD if an unknown currency code is provided
+    return format('USD');
+  }
 }
 
 export function formatDate(date: string) {

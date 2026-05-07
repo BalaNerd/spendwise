@@ -1,6 +1,5 @@
 import { Router } from 'express';
-import { requireAuth } from '../middleware/auth.js';
-import { createUserClient } from '../utils/supabase.js';
+import { requireAuth, createUserClient } from '../middleware/auth.js';
 
 const router = Router();
 
@@ -53,7 +52,7 @@ router.get('/:month', async (req, res) => {
     let categoryNames = {};
     if (categoryIds.length > 0) {
       const { data: cats } = await supabase.from('expense_categories').select('id, name').in('id', categoryIds);
-      categoryNames = Object.fromEntries((cats || []).map((c) => [c.id, c.name]));
+      categoryNames = Object.fromEntries((cats || []).map((c) => [c.id, c.name || 'Uncategorized']));
     }
 
     const categoryBreakdown = Object.entries(categoryTotals).map(([id, total]) => ({

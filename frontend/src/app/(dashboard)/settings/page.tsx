@@ -4,7 +4,9 @@ import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { Card, CardHeader, CardTitle, CardDescription } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
-import { api } from '@/lib/api';
+import { api, fetchApi } from '@/lib/api';
+import { usePreferences } from '@/components/providers/PreferencesProvider';
+import { useToast } from '@/components/providers/ToastProvider';
 
 type User = {
   id: string;
@@ -18,6 +20,8 @@ type User = {
 const CURRENCIES = ['USD', 'EUR', 'GBP', 'INR', 'JPY'];
 
 export default function SettingsPage() {
+  const { preferences, loading: prefsLoading, setPreferences } = usePreferences();
+  const { toast } = useToast();
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -30,26 +34,52 @@ export default function SettingsPage() {
   });
 
   useEffect(() => {
-    api
-      .get<User>('/api/users/me')
-      .then((data) => {
-        setUser(data);
-        setForm({
-          currency: data.currency || 'USD',
-          monthly_budget: data.monthly_budget ?? 0,
-          insight_level: data.insight_level || 'basic'
-        });
-      })
-      .catch(() => {})
-      .finally(() => setLoading(false));
-  }, []);
+    if (preferences) {
+      setUser((u) =>
+        u
+          ? { ...u, ...preferences }
+          : ({
+              id: '',
+              email: preferences.email || '',
+              full_name: preferences.full_name,
+              currency: preferences.currency,
+              monthly_budget: preferences.monthly_budget,
+              insight_level: preferences.insight_level,
+            } as User)
+      );
+      setForm({
+        currency: preferences.currency || 'USD',
+        monthly_budget: preferences.monthly_budget ?? 0,
+        insight_level: preferences.insight_level || 'basic',
+      });
+      setLoading(false);
+    } else if (!prefsLoading) {
+      setLoading(false);
+    }
+  }, [preferences, prefsLoading]);
 
   async function handleSave(e: React.FormEvent) {
     e.preventDefault();
     setSaving(true);
+
     try {
-      await api.patch('/api/users/me', form);
+      await api.patch('users/me', form);
       setUser((u) => (u ? { ...u, ...form } : null));
+      if (preferences) {
+        setPreferences({
+          ...preferences,
+          currency: form.currency,
+          monthly_budget: form.monthly_budget,
+          insight_level: form.insight_level,
+        });
+      }
+      toast({ kind: 'success', title: 'Saved', message: 'Your preferences were updated.' });
+    } catch (error: any) {
+      toast({ 
+        kind: 'error', 
+        title: 'Save failed', 
+        message: error.message || 'Failed to update preferences' 
+      });
     } finally {
       setSaving(false);
     }
@@ -62,17 +92,98 @@ export default function SettingsPage() {
       const supabase = createClient();
       const { data: { session } } = await supabase.auth.getSession();
       const token = session?.access_token;
-      const url = `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'}/api/export/expenses?month=${exportMonth}&limit=5000`;
-      const res = await fetch(url, {
-        headers: token ? { Authorization: `Bearer ${token}` } : {},
+
+      // Fetch expenses data for the report using API client
+      const expensesData = await api.get(`expenses?month=${exportMonth}&limit=5000`);
+      const expenses = Array.isArray(expensesData) ? expensesData : [];
+
+      // Transform expenses data to match backend format
+      const transactions = expenses.map((expense: any) => ({
+        date: expense.date,
+        amount: Number(expense.amount) || 0,
+        category: expense.expense_categories?.name || 'Uncategorized',
+        type: expense.recurring ? 'subscription' : 'expense',
+        recurring: expense.recurring || false
+      }));
+
+      // Calculate previous month for growth comparison
+      const currentDate = new Date(exportMonth + '-01');
+      const previousMonth = new Date(currentDate);
+      previousMonth.setMonth(previousMonth.getMonth() - 1);
+      const previousMonthStr = previousMonth.toISOString().slice(0, 7);
+
+      // Prepare export options
+      const exportOptions = {
+        monthlyBudget: user?.monthly_budget || 0,
+        netSettlementPosition: 0, // You can calculate this if needed
+        currentMonth: exportMonth,
+        previousMonth: previousMonthStr
+      };
+
+      const exportRes = (await fetchApi('export/enhanced', {
+        method: 'POST',
+        headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+        body: JSON.stringify({ transactions, options: exportOptions }),
+      })) as Response;
+      
+      if (!exportRes.ok) {
+        const errorText = await exportRes.text();
+        let errorData;
+        try {
+          errorData = JSON.parse(errorText);
+        } catch {
+          errorData = { error: errorText };
+        }
+        throw new Error(errorData.error || 'Failed to generate Excel report');
+      }
+
+      // Generate filename
+      const date = new Date(exportMonth + '-01');
+      const monthName = date.toLocaleDateString('en-US', { month: 'long' });
+      const year = date.getFullYear();
+      const filename = `SpendWise_Report_${monthName}_${year}.xlsx`;
+      
+      // Download the file
+      try {
+        const blob = await exportRes.blob();
+        
+        // Validate blob
+        if (!blob || blob.size === 0) {
+          throw new Error('Received empty Excel file from server');
+        }
+        
+        const blobUrl = URL.createObjectURL(blob);
+        
+        const a = document.createElement('a');
+        a.href = blobUrl;
+        a.download = filename;
+        a.style.display = 'none';
+        document.body.appendChild(a);
+        
+        // Trigger download
+        a.click();
+        
+        // Cleanup after a short delay
+        setTimeout(() => {
+          document.body.removeChild(a);
+          URL.revokeObjectURL(blobUrl);
+        }, 100);
+      } catch (blobError: any) {
+        throw new Error('Failed to create or download Excel file: ' + blobError.message);
+      }
+
+      toast({
+        kind: 'success',
+        title: 'Export successful',
+        message: `Financial report for ${monthName} ${year} has been downloaded`
       });
-      const blob = await res.blob();
-      const blobUrl = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = blobUrl;
-      a.download = `spendwise-expenses-${exportMonth}.csv`;
-      a.click();
-      URL.revokeObjectURL(blobUrl);
+
+    } catch (error: any) {
+      toast({
+        kind: 'error',
+        title: 'Export failed',
+        message: error.message || 'Failed to generate financial report'
+      });
     } finally {
       setExporting(false);
     }
@@ -89,7 +200,7 @@ export default function SettingsPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
-        <div className="animate-spin h-8 w-8 border-2 border-neutral-600 border-t-white rounded-full" />
+        <div className="animate-spin h-8 w-8 border-2 border-border border-t-foreground rounded-full" />
       </div>
     );
   }
@@ -97,8 +208,8 @@ export default function SettingsPage() {
   return (
     <div className="space-y-8">
       <div>
-        <h1 className="text-2xl font-semibold text-white">Profile & Settings</h1>
-        <p className="mt-1 text-neutral-400">
+        <h1 className="text-2xl md:text-3xl font-semibold text-foreground">Profile & Settings</h1>
+        <p className="mt-1 text-sm text-muted-foreground md:text-base">
           Manage your account preferences and data
         </p>
       </div>
@@ -116,12 +227,12 @@ export default function SettingsPage() {
           </CardHeader>
           <div className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-neutral-400">Email</label>
-              <p className="mt-1 text-white">{user?.email}</p>
+              <label className="block text-sm font-medium text-muted-foreground">Email</label>
+              <p className="mt-1 text-foreground">{user?.email}</p>
             </div>
             <div>
-              <label className="block text-sm font-medium text-neutral-400">Name</label>
-              <p className="mt-1 text-white">{user?.full_name || '—'}</p>
+              <label className="block text-sm font-medium text-muted-foreground">Name</label>
+              <p className="mt-1 text-foreground">{user?.full_name || '—'}</p>
             </div>
           </div>
         </Card>
@@ -133,14 +244,14 @@ export default function SettingsPage() {
           </CardHeader>
           <div className="space-y-6">
             <div>
-              <label htmlFor="currency" className="block text-sm font-medium text-neutral-400 mb-2">
+              <label htmlFor="currency" className="block text-sm font-medium text-muted-foreground mb-2">
                 Currency
               </label>
               <select
                 id="currency"
                 value={form.currency}
                 onChange={(e) => setForm((f) => ({ ...f, currency: e.target.value }))}
-                className="w-full max-w-xs rounded-lg border border-neutral-700 bg-neutral-800 px-4 py-3 text-white focus:border-neutral-500 focus:outline-none focus:ring-1 focus:ring-neutral-500"
+                className="w-full max-w-xs rounded-lg border border-border bg-background px-4 py-3 text-foreground focus:border-foreground/40 focus:outline-none focus:ring-1 focus:ring-foreground/20"
               >
                 {CURRENCIES.map((c) => (
                   <option key={c} value={c}>
@@ -150,7 +261,7 @@ export default function SettingsPage() {
               </select>
             </div>
             <div>
-              <label htmlFor="budget" className="block text-sm font-medium text-neutral-400 mb-2">
+              <label htmlFor="budget" className="block text-sm font-medium text-muted-foreground mb-2">
                 Monthly budget
               </label>
               <input
@@ -163,11 +274,11 @@ export default function SettingsPage() {
                   setForm((f) => ({ ...f, monthly_budget: parseFloat(e.target.value) || 0 }))
                 }
                 placeholder="0"
-                className="w-full max-w-xs rounded-lg border border-neutral-700 bg-neutral-800 px-4 py-3 text-white placeholder-neutral-500 focus:border-neutral-500 focus:outline-none focus:ring-1 focus:ring-neutral-500"
+                className="w-full max-w-xs rounded-lg border border-border bg-background px-4 py-3 text-foreground placeholder:text-muted-foreground focus:border-foreground/40 focus:outline-none focus:ring-1 focus:ring-foreground/20"
               />
             </div>
             <div>
-              <label htmlFor="insight" className="block text-sm font-medium text-neutral-400 mb-2">
+              <label htmlFor="insight" className="block text-sm font-medium text-muted-foreground mb-2">
                 Insight level
               </label>
               <select
@@ -179,7 +290,7 @@ export default function SettingsPage() {
                     insight_level: e.target.value as 'basic' | 'advanced'
                   }))
                 }
-                className="w-full max-w-xs rounded-lg border border-neutral-700 bg-neutral-800 px-4 py-3 text-white focus:border-neutral-500 focus:outline-none focus:ring-1 focus:ring-neutral-500"
+                className="w-full max-w-xs rounded-lg border border-border bg-background px-4 py-3 text-foreground focus:border-foreground/40 focus:outline-none focus:ring-1 focus:ring-foreground/20"
               >
                 <option value="basic">Basic — Summary and high-level trends</option>
                 <option value="advanced">Advanced — Detailed patterns and suggestions</option>
@@ -194,13 +305,14 @@ export default function SettingsPage() {
         <Card>
           <CardHeader>
             <CardTitle>Data export</CardTitle>
-            <CardDescription>Download expenses as CSV — choose a month to export</CardDescription>
+            <CardDescription>Download financial report as XLSX — choose a month to export</CardDescription>
           </CardHeader>
           <div className="flex flex-wrap items-center gap-3">
             <select
+              aria-label="Select export month"
               value={exportMonth}
               onChange={(e) => setExportMonth(e.target.value)}
-              className="rounded-lg border border-neutral-700 bg-neutral-800 px-3 py-2 text-white text-sm"
+              className="rounded-lg border border-border bg-background px-3 py-2 text-foreground text-sm focus:outline-none focus:ring-1 focus:ring-foreground/20"
             >
               {exportMonthOptions.map((opt) => (
                 <option key={opt.value} value={opt.value}>
@@ -209,7 +321,7 @@ export default function SettingsPage() {
               ))}
             </select>
             <Button type="button" variant="outline" onClick={handleExport} isLoading={exporting}>
-              Export CSV
+              Export XLSX Report
             </Button>
           </div>
         </Card>

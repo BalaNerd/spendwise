@@ -15,6 +15,9 @@ import summariesRouter from './routes/summaries.js';
 import insightsRouter from './routes/insights.js';
 import usersRouter from './routes/users.js';
 import exportRouter from './routes/export.js';
+import exportEnhancedRouter from './routes/export-enhanced.js';
+import settlementsRouter from './routes/settlements.js';
+import peopleRouter from './routes/people.js';
 
 if (!process.env.SUPABASE_URL || !process.env.SUPABASE_ANON_KEY) {
   console.error(
@@ -27,8 +30,13 @@ const app = express();
 const PORT = process.env.PORT || 4000;
 
 // Middleware
-app.use(cors({ origin: true, credentials: true }));
-app.use(express.json());
+app.use(cors({ 
+  origin: ['http://localhost:3000', 'http://localhost:3001'], 
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
+}));
+app.use(express.json({ limit: '50mb' })); // Increase limit for large exports
 
 // Request validation: expect Authorization header with Bearer token (Supabase JWT)
 app.use((req, res, next) => {
@@ -52,6 +60,9 @@ app.use('/api/summaries', summariesRouter);
 app.use('/api/insights', insightsRouter);
 app.use('/api/users', usersRouter);
 app.use('/api/export', exportRouter);
+app.use('/api/export/enhanced', exportEnhancedRouter);
+app.use('/api/settlements', settlementsRouter);
+app.use('/api/people', peopleRouter);
 
 // 404
 app.use((req, res) => {

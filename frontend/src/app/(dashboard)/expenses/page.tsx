@@ -12,7 +12,7 @@ export default function ExpensesPage() {
   const [currency, setCurrency] = useState('INR');
 
   useEffect(() => {
-    api.get<{ currency?: string }>('/api/users/me').then((u) => setCurrency(u?.currency || 'INR')).catch(() => {});
+    api.get<{ currency?: string }>('users/me').then((u) => setCurrency(u?.currency || 'INR')).catch(() => {});
   }, []);
 
   const monthOptions = Array.from({ length: 12 }, (_, i) => {

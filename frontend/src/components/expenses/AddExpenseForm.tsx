@@ -51,7 +51,7 @@ export function AddExpenseForm({
   const isEdit = !!editingExpense;
 
   useEffect(() => {
-    api.get<Category[]>('/api/categories').then(setCategories).catch(() => []);
+    api.get<Category[]>('categories').then(setCategories).catch(() => []);
   }, []);
 
   useEffect(() => {
@@ -90,7 +90,7 @@ export function AddExpenseForm({
       } else {
         setInternalLoading(true);
         try {
-          await api.put(`/api/expenses/${editingExpense.id}`, payload);
+          await api.put(`expenses/${editingExpense.id}`, payload);
         } finally {
           setInternalLoading(false);
         }
@@ -108,7 +108,7 @@ export function AddExpenseForm({
     } else {
       setInternalLoading(true);
       try {
-        await api.post('/api/expenses', payload);
+        await api.post('expenses', payload);
         setForm(defaultForm);
         setOpen(false);
         onSuccess?.();
@@ -139,41 +139,44 @@ export function AddExpenseForm({
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.95 }}
               onClick={(e) => e.stopPropagation()}
-              className="w-full max-w-md rounded-xl border border-neutral-800 bg-neutral-900 p-6"
+              className="w-full max-w-md rounded-xl border border-border bg-card p-6 text-card-foreground shadow-lg shadow-black/10 dark:shadow-black/40 transition-colors duration-300"
             >
-              <h3 className="text-lg font-semibold text-white">
+              <h3 className="text-lg font-semibold text-foreground">
                 {isEdit ? 'Edit expense' : 'Add expense'}
               </h3>
               <form onSubmit={handleSubmit} className="mt-6 space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-neutral-400 mb-2">Amount</label>
+                  <label htmlFor="expense-amount" className="block text-sm font-medium text-muted-foreground mb-2">Amount</label>
                   <input
+                    id="expense-amount"
                     type="number"
                     step="0.01"
                     min="0"
                     required
                     value={form.amount}
                     onChange={(e) => setForm((f) => ({ ...f, amount: e.target.value }))}
-                    className="w-full rounded-lg border border-neutral-700 bg-neutral-800 px-4 py-3 text-white"
+                    className="w-full rounded-lg border border-border bg-background px-4 py-3 text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-foreground/20 transition-colors duration-300"
                     placeholder="Enter amount"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-neutral-400 mb-2">Date</label>
+                  <label htmlFor="expense-date" className="block text-sm font-medium text-muted-foreground mb-2">Date</label>
                   <input
+                    id="expense-date"
                     type="date"
                     required
                     value={form.date}
                     onChange={(e) => setForm((f) => ({ ...f, date: e.target.value }))}
-                    className="w-full rounded-lg border border-neutral-700 bg-neutral-800 px-4 py-3 text-white"
+                    className="w-full rounded-lg border border-border bg-background px-4 py-3 text-foreground focus:outline-none focus:ring-1 focus:ring-foreground/20 transition-colors duration-300"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-neutral-400 mb-2">Category</label>
+                  <label htmlFor="expense-category" className="block text-sm font-medium text-muted-foreground mb-2">Category</label>
                   <select
+                    id="expense-category"
                     value={form.category_id}
                     onChange={(e) => setForm((f) => ({ ...f, category_id: e.target.value }))}
-                    className="w-full rounded-lg border border-neutral-700 bg-neutral-800 px-4 py-3 text-white"
+                    className="w-full rounded-lg border border-border bg-background px-4 py-3 text-foreground focus:outline-none focus:ring-1 focus:ring-foreground/20 transition-colors duration-300"
                   >
                     <option value="">— Select —</option>
                     {categories.map((c) => (
@@ -182,23 +185,25 @@ export function AddExpenseForm({
                   </select>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-neutral-400 mb-2">Description</label>
+                  <label htmlFor="expense-description" className="block text-sm font-medium text-muted-foreground mb-2">Description</label>
                   <input
+                    id="expense-description"
                     type="text"
                     value={form.description}
                     onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))}
                     placeholder="Optional"
-                    className="w-full rounded-lg border border-neutral-700 bg-neutral-800 px-4 py-3 text-white placeholder-neutral-500"
+                    className="w-full rounded-lg border border-border bg-background px-4 py-3 text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-foreground/20 transition-colors duration-300"
                   />
                 </div>
                 <label className="flex items-center gap-2 cursor-pointer">
                   <input
+                    id="expense-recurring"
                     type="checkbox"
                     checked={form.recurring}
                     onChange={(e) => setForm((f) => ({ ...f, recurring: e.target.checked }))}
-                    className="rounded border-neutral-600"
+                    className="rounded border-border bg-background"
                   />
-                  <span className="text-sm text-neutral-400">Recurring expense</span>
+                  <span className="text-sm text-muted-foreground">Recurring expense</span>
                 </label>
                 <div className="flex gap-3 pt-2">
                   <Button

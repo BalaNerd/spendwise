@@ -60,9 +60,26 @@ router.post('/', async (req, res) => {
 
     const { amount, category_id, description, date, recurring = false } = req.body;
 
+    // Enhanced validation
     if (!amount || !date) {
       return res.status(400).json({
         error: 'Amount and date are required'
+      });
+    }
+
+    // Validate amount is a number and positive
+    const amountNum = Number(amount);
+    if (isNaN(amountNum) || amountNum <= 0) {
+      return res.status(400).json({
+        error: 'Amount must be a positive number'
+      });
+    }
+
+    // Validate date format
+    const dateObj = new Date(date);
+    if (isNaN(dateObj.getTime())) {
+      return res.status(400).json({
+        error: 'Invalid date format'
       });
     }
 
@@ -70,10 +87,10 @@ router.post('/', async (req, res) => {
       .from('expenses')
       .insert({
         user_id: userId,          // 🔑 REQUIRED FOR RLS
-        amount: Number(amount),
+        amount: amountNum,
         category_id: category_id || null,
         description: description || null,
-        date,
+        date: dateObj.toISOString().slice(0, 10),
         recurring: Boolean(recurring)
       })
       .select()
