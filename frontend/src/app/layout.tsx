@@ -9,7 +9,18 @@ const inter = Inter({ subsets: ['latin'], variable: '--font-sans' });
 
 export const metadata: Metadata = {
   title: 'SpendWise — Financial Insights Platform',
-  description: 'Data-driven financial insights for professionals. Understand your spending, subscriptions, and trends.'
+  description: 'Data-driven financial insights for professionals. Understand your spending, subscriptions, and trends.',
+  manifest: '/manifest.json',
+  themeColor: '#020817',
+  icons: {
+    icon: '/icon-512x512.svg',
+    apple: '/icon-512x512.svg',
+  },
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: 'default',
+    title: 'SpendWise',
+  },
 };
 
 export default function RootLayout({

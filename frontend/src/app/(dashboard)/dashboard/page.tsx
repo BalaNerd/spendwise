@@ -5,6 +5,7 @@ import { motion } from 'framer-motion';
 import { Card, CardHeader, CardTitle, CardDescription } from '@/components/ui/Card';
 import { AddExpenseForm } from '@/components/expenses/AddExpenseForm';
 import { ExpenseList } from '@/components/expenses/ExpenseList';
+import { SkeletonCard, SkeletonChart } from '@/components/ui/Skeleton';
 import { fetchApi } from '@/lib/api';
 import { formatCurrency, percentChange } from '@/lib/utils';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
@@ -119,8 +120,21 @@ export default function DashboardPage() {
 
   if (loading && !summary) {
     return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <div className="animate-spin h-8 w-8 border-2 border-neutral-600 border-t-white rounded-full" />
+      <div className="space-y-8 animate-in fade-in duration-500">
+        <div className="flex justify-between items-center">
+          <div className="space-y-2">
+            <div className="h-8 w-48 bg-muted animate-pulse rounded-md"></div>
+            <div className="h-4 w-64 bg-muted animate-pulse rounded-md"></div>
+          </div>
+          <div className="h-10 w-32 bg-muted animate-pulse rounded-md"></div>
+        </div>
+        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-5">
+          {Array.from({ length: 5 }).map((_, i) => <SkeletonCard key={i} />)}
+        </div>
+        <div className="grid gap-6 lg:grid-cols-2">
+          <SkeletonChart height={280} />
+          <SkeletonChart height={280} />
+        </div>
       </div>
     );
   }
@@ -156,7 +170,12 @@ export default function DashboardPage() {
   }));
 
   return (
-    <div className={`space-y-8 ${isDark ? '' : 'bg-slate-50'}`}>
+    <motion.div 
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.4 }}
+      className="space-y-8"
+    >
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
           <h1 className={`text-2xl md:text-3xl font-semibold ${isDark ? 'text-foreground' : 'text-slate-900'}`}>Dashboard</h1>
@@ -399,6 +418,6 @@ export default function DashboardPage() {
           currency={currency}
         />
       </Card>
-    </div>
+    </motion.div>
   );
 }

@@ -15,7 +15,7 @@ export function Card({ children, className }: CardProps) {
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3 }}
       className={cn(
-        'rounded-xl border border-border bg-card/80 text-card-foreground p-6 shadow-sm shadow-black/5 dark:shadow-black/30 transition-colors duration-300',
+        'glass-card rounded-xl text-card-foreground p-6',
         className
       )}
     >

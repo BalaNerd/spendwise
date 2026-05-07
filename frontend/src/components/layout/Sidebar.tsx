@@ -3,14 +3,15 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
+import { LayoutDashboard, Receipt, CreditCard, Users, LineChart, Settings, X } from 'lucide-react';
 
 export const NAV_ITEMS = [
-  { href: '/dashboard', label: 'Dashboard' },
-  { href: '/expenses', label: 'Expenses' },
-  { href: '/subscriptions', label: 'Subscriptions' },
-  { href: '/settlements', label: 'Settlements' },
-  { href: '/insights', label: 'Insights' },
-  { href: '/settings', label: 'Settings' },
+  { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
+  { href: '/expenses', label: 'Expenses', icon: Receipt },
+  { href: '/subscriptions', label: 'Subscriptions', icon: CreditCard },
+  { href: '/settlements', label: 'Settlements', icon: Users },
+  { href: '/insights', label: 'Insights', icon: LineChart },
+  { href: '/settings', label: 'Settings', icon: Settings },
 ];
 
 type SidebarProps = {
@@ -23,25 +24,30 @@ export function Sidebar({ className }: SidebarProps) {
   return (
     <aside
       className={cn(
-        'hidden md:flex md:w-64 md:flex-col md:border-r md:border-border md:bg-card/60 md:py-6 md:px-4',
+        'hidden md:flex md:w-64 md:flex-col md:border-r md:border-border/40 md:bg-card/30 md:py-6 md:px-4 backdrop-blur-xl',
         className
       )}
     >
-      <nav className="mt-2 flex flex-1 flex-col gap-1 text-sm">
-        {NAV_ITEMS.map((item) => (
-          <Link
-            key={item.href}
-            href={item.href}
-            className={cn(
-              'rounded-lg px-3 py-2 font-medium transition-all duration-300',
-              pathname === item.href
-                ? 'bg-accent text-accent-foreground'
-                : 'text-muted-foreground hover:text-foreground hover:bg-accent/60'
-            )}
-          >
-            {item.label}
-          </Link>
-        ))}
+      <nav className="mt-2 flex flex-1 flex-col gap-1.5 text-sm">
+        {NAV_ITEMS.map((item) => {
+          const Icon = item.icon;
+          const isActive = pathname === item.href;
+          return (
+            <Link
+              key={item.href}
+              href={item.href}
+              className={cn(
+                'group flex items-center gap-3 rounded-lg px-3 py-2.5 font-medium transition-all duration-300',
+                isActive
+                  ? 'bg-primary/10 text-primary'
+                  : 'text-muted-foreground hover:bg-muted/50 hover:text-foreground'
+              )}
+            >
+              <Icon className={cn('h-5 w-5', isActive ? 'text-primary' : 'text-muted-foreground group-hover:text-foreground')} />
+              {item.label}
+            </Link>
+          );
+        })}
       </nav>
     </aside>
   );
@@ -60,49 +66,53 @@ export function MobileSidebar({ open, onClose }: MobileSidebarProps) {
   return (
     <div className="fixed inset-0 z-50 flex md:hidden">
       <div
-        className="fixed inset-0 bg-black/50 z-40"
+        className="fixed inset-0 bg-background/80 backdrop-blur-sm z-40 transition-opacity duration-300"
         onClick={onClose}
       />
       <div
         className={cn(
-          'fixed left-0 top-0 z-50 h-full w-64 bg-background border-r border-border shadow-xl',
-          'transform transition-transform duration-300 translate-x-0'
+          'fixed left-0 top-0 z-50 h-full w-[280px] bg-background border-r border-border/50 shadow-2xl',
+          'transform transition-transform duration-300 ease-in-out',
+          open ? 'translate-x-0' : '-translate-x-full'
         )}
       >
-        <div className="flex items-center justify-between px-4 py-4 border-b border-border">
-          <span className="text-sm font-semibold text-foreground">Navigation</span>
+        <div className="flex h-16 items-center justify-between px-6 border-b border-border/40">
+          <div className="flex items-center gap-2">
+            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground shadow-sm">
+              <span className="font-bold text-lg leading-none tracking-tighter">S</span>
+            </div>
+            <span className="font-semibold text-foreground">Menu</span>
+          </div>
           <button
             type="button"
             aria-label="Close menu"
-            className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-border bg-card/70 text-foreground hover:bg-accent transition-all duration-300"
+            className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
             onClick={onClose}
           >
-            <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" aria-hidden="true">
-              <path
-                d="M6 6l12 12M18 6L6 18"
-                stroke="currentColor"
-                strokeWidth="1.5"
-                strokeLinecap="round"
-              />
-            </svg>
+            <X className="h-5 w-5" />
           </button>
         </div>
-        <nav className="flex flex-col gap-1 px-3 py-4 text-sm">
-          {NAV_ITEMS.map((item) => (
-            <Link
-              key={item.href}
-              href={item.href}
-              onClick={onClose}
-              className={cn(
-                'rounded-lg px-3 py-2 font-medium transition-all duration-300',
-                pathname === item.href
-                  ? 'bg-accent text-accent-foreground'
-                  : 'text-muted-foreground hover:text-foreground hover:bg-accent/60'
-              )}
-            >
-              {item.label}
-            </Link>
-          ))}
+        <nav className="flex flex-col gap-1 px-4 py-6 text-sm">
+          {NAV_ITEMS.map((item) => {
+            const Icon = item.icon;
+            const isActive = pathname === item.href;
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                onClick={onClose}
+                className={cn(
+                  'group flex items-center gap-3 rounded-lg px-3 py-3 font-medium transition-all duration-300',
+                  isActive
+                    ? 'bg-primary/10 text-primary'
+                    : 'text-muted-foreground hover:bg-muted/50 hover:text-foreground'
+                )}
+              >
+                <Icon className={cn('h-5 w-5', isActive ? 'text-primary' : 'text-muted-foreground group-hover:text-foreground')} />
+                {item.label}
+              </Link>
+            );
+          })}
         </nav>
       </div>
     </div>

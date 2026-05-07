@@ -8,6 +8,7 @@ import { Card, CardHeader, CardTitle, CardDescription } from '@/components/ui/Ca
 import { api } from '@/lib/api';
 import { usePreferences } from '@/components/providers/PreferencesProvider';
 import { formatCurrency } from '@/lib/utils';
+import { SkeletonCard, SkeletonChart } from '@/components/ui/Skeleton';
 
 type InsightsV2 = {
   level: 'basic' | 'advanced';
@@ -82,16 +83,31 @@ export default function InsightsPage() {
 
   if (loading) {
     return (
-      <div className="space-y-8">
-        <div className="flex items-center justify-center min-h-[400px]">
-          <div className="animate-spin h-8 w-8 border-2 border-border border-t-foreground rounded-full" />
+      <div className="space-y-8 animate-in fade-in duration-500">
+        <div className="flex justify-between items-center">
+          <div className="space-y-2">
+            <div className="h-8 w-48 bg-muted animate-pulse rounded-md"></div>
+            <div className="h-4 w-64 bg-muted animate-pulse rounded-md"></div>
+          </div>
+        </div>
+        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-5">
+          {Array.from({ length: 5 }).map((_, i) => <SkeletonCard key={i} />)}
+        </div>
+        <div className="grid gap-6 lg:grid-cols-2">
+          <SkeletonChart height={280} />
+          <SkeletonChart height={280} />
         </div>
       </div>
     );
   }
 
   return (
-    <div className={`max-w-7xl mx-auto px-6 py-8 space-y-8 ${isDark ? '' : 'bg-slate-50'}`}>
+    <motion.div 
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.4 }}
+      className="space-y-8"
+    >
       <div>
         <h1 className={`text-2xl md:text-3xl font-semibold ${isDark ? 'text-foreground' : 'text-slate-900'}`}>Insights</h1>
         <p className={`mt-1 ${isDark ? 'text-sm text-muted-foreground md:text-base' : 'text-sm text-slate-500 md:text-base'}`}>
@@ -372,6 +388,6 @@ export default function InsightsPage() {
           )}
         </>
       )}
-    </div>
+    </motion.div>
   );
 }

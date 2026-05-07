@@ -1,0 +1,17 @@
+{
+  "name": "SpendWise",
+  "short_name": "SpendWise",
+  "description": "Data-driven financial insights platform.",
+  "start_url": "/dashboard",
+  "display": "standalone",
+  "background_color": "#020817",
+  "theme_color": "#10b981",
+  "icons": [
+    {
+      "src": "/icon-512x512.svg",
+      "sizes": "192x192 512x512",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
