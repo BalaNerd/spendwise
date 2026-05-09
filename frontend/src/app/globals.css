@@ -4,8 +4,8 @@
 
 @layer base {
   :root {
-    /* Premium Light Theme */
-    --background: 0 0% 100%;
+    /* Premium Light Theme - Refined Palette */
+    --background: 210 40% 98%;
     --foreground: 222.2 47.4% 11.2%;
 
     --card: 0 0% 100%;
@@ -23,7 +23,7 @@
     --muted: 210 40% 96.1%;
     --muted-foreground: 215.4 16.3% 46.9%;
 
-    --accent: 210 40% 96.1%;
+    --accent: 160 84% 39%;
     --accent-foreground: 222.2 47.4% 11.2%;
 
     --destructive: 0 84.2% 60.2%;
@@ -33,30 +33,30 @@
     --input: 214.3 31.8% 91.4%;
     --ring: 160 84% 39%;
 
-    --radius: 1rem;
+    --radius: 1.25rem;
   }
 
   .dark {
-    /* Premium Deep Navy Theme */
-    --background: 224 71% 4%;
+    /* Premium Deep Navy/Slate Theme */
+    --background: 222 47% 4%;
     --foreground: 210 40% 98%;
 
-    --card: 222 47% 11%;
+    --card: 222 47% 7%;
     --card-foreground: 210 40% 98%;
 
-    --popover: 222 47% 11%;
+    --popover: 222 47% 7%;
     --popover-foreground: 210 40% 98%;
 
-    --primary: 160 84% 39%; /* Emerald Accent */
+    --primary: 160 84% 45%; /* Brighter Emerald for Dark Mode */
     --primary-foreground: 222.2 47.4% 1.2%;
 
-    --secondary: 217.2 32.6% 17.5%;
+    --secondary: 217.2 32.6% 12%;
     --secondary-foreground: 210 40% 98%;
 
-    --muted: 217.2 32.6% 17.5%;
+    --muted: 217.2 32.6% 12%;
     --muted-foreground: 215 20.2% 65.1%;
 
-    --accent: 217.2 32.6% 17.5%;
+    --accent: 160 84% 45%;
     --accent-foreground: 210 40% 98%;
 
     --destructive: 0 62.8% 30.6%;
@@ -64,7 +64,7 @@
 
     --border: 217.2 32.6% 17.5%;
     --input: 217.2 32.6% 17.5%;
-    --ring: 160 84% 39%;
+    --ring: 160 84% 45%;
   }
 }
 
@@ -73,24 +73,37 @@
     @apply border-border;
   }
   body {
-    @apply bg-background text-foreground antialiased selection:bg-primary/20 selection:text-primary;
+    @apply bg-background text-foreground antialiased selection:bg-primary/30 selection:text-primary transition-colors duration-500;
     font-feature-settings: "rlig" 1, "calt" 1;
   }
   html, body {
     max-width: 100vw;
     overflow-x: hidden;
+    scroll-behavior: smooth;
   }
 }
 
-/* Glassmorphism Utilities */
+/* Glassmorphism & Premium Utilities */
 @layer utilities {
   .glass {
-    @apply bg-background/60 backdrop-blur-md border border-border/50;
+    @apply bg-background/70 backdrop-blur-xl border border-border/40;
   }
   .glass-card {
-    @apply bg-card/60 backdrop-blur-xl border border-border/50 shadow-sm transition-all duration-300;
+    @apply bg-card/40 backdrop-blur-2xl border border-border/30 shadow-lg shadow-black/5 transition-all duration-500;
   }
   .glass-card:hover {
-    @apply shadow-md border-border/80 bg-card/80;
+    @apply shadow-xl shadow-primary/5 border-primary/20 bg-card/60 -translate-y-0.5;
   }
+  .text-gradient {
+    @apply bg-gradient-to-br from-foreground to-foreground/70 bg-clip-text text-transparent;
+  }
+  .animate-float {
+    animation: float 6s ease-in-out infinite;
+  }
+}
+
+@keyframes float {
+  0% { transform: translateY(0px); }
+  50% { transform: translateY(-10px); }
+  100% { transform: translateY(0px); }
 }

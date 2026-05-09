@@ -27,32 +27,37 @@ export function Header({ onOpenMobileMenu }: HeaderProps) {
   const isDark = mounted ? resolvedTheme === 'dark' : true;
 
   return (
-    <header className="sticky top-0 z-40 w-full border-b border-border/40 glass transition-colors duration-300">
+    <header className="sticky top-0 z-40 w-full border-b border-border/10 glass transition-all duration-300">
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
-        <Link href="/dashboard" className="flex items-center gap-2">
-          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground shadow-sm">
-            <span className="font-bold text-lg leading-none tracking-tighter">S</span>
-          </div>
-          <span className="text-xl font-bold tracking-tight text-foreground">SpendWise</span>
+        <Link href="/dashboard" className="flex items-center gap-3 group">
+          <motion.div 
+            whileHover={{ rotate: 10, scale: 1.1 }}
+            className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary text-primary-foreground shadow-lg shadow-primary/20 transition-all duration-300"
+          >
+            <span className="font-bold text-xl leading-none tracking-tighter">S</span>
+          </motion.div>
+          <span className="text-xl font-bold tracking-tight text-foreground/90 group-hover:text-foreground transition-colors">
+            SpendWise
+          </span>
         </Link>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-4">
           {/* Theme toggle */}
           <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
             <Button
               variant="ghost"
               size="sm"
-              className="w-9 px-0"
+              className="w-10 h-10 px-0 rounded-xl hover:bg-primary/10 hover:text-primary transition-colors"
               onClick={() => setTheme(isDark ? 'light' : 'dark')}
               aria-label="Toggle theme"
             >
               <motion.div
                 key={isDark ? 'moon' : 'sun'}
-                initial={{ opacity: 0, rotate: -45 }}
-                animate={{ opacity: 1, rotate: 0 }}
-                transition={{ duration: 0.2 }}
+                initial={{ opacity: 0, rotate: -90, scale: 0.5 }}
+                animate={{ opacity: 1, rotate: 0, scale: 1 }}
+                transition={{ type: 'spring', damping: 15 }}
               >
-                {isDark ? <Moon className="h-5 w-5" /> : <Sun className="h-5 w-5" />}
+                {isDark ? <Moon className="h-5.5 w-5.5" /> : <Sun className="h-5.5 w-5.5" />}
               </motion.div>
             </Button>
           </motion.div>
@@ -60,7 +65,12 @@ export function Header({ onOpenMobileMenu }: HeaderProps) {
           {/* Desktop sign out */}
           <div className="hidden md:block">
             <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
-              <Button variant="outline" size="sm" onClick={handleSignOut} className="gap-2 font-medium">
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={handleSignOut} 
+                className="gap-2 font-medium rounded-xl border-border/40 hover:bg-destructive/10 hover:text-destructive hover:border-destructive/20 transition-all duration-300"
+              >
                 <LogOut className="h-4 w-4" />
                 Sign out
               </Button>
@@ -72,11 +82,11 @@ export function Header({ onOpenMobileMenu }: HeaderProps) {
             <Button
               variant="ghost"
               size="sm"
-              className="w-9 px-0"
+              className="w-10 h-10 px-0 rounded-xl hover:bg-primary/10"
               onClick={onOpenMobileMenu}
               aria-label="Open menu"
             >
-              <Menu className="h-5 w-5" />
+              <Menu className="h-6 w-6" />
             </Button>
           </motion.div>
         </div>

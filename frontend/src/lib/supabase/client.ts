@@ -12,7 +12,13 @@ export function createClient() {
   const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
   if (!supabaseUrl || !supabaseAnonKey) {
-    throw new Error('Missing NEXT_PUBLIC_SUPABASE_URL / NEXT_PUBLIC_SUPABASE_ANON_KEY');
+    console.error('Missing Supabase environment variables. Auth will not work.');
+    // In production, we don't want to crash the whole app if one component calls this,
+    // but auth is core. We'll throw a more descriptive error.
+    throw new Error(
+      'SpendWise Configuration Error: NEXT_PUBLIC_SUPABASE_URL or NEXT_PUBLIC_SUPABASE_ANON_KEY is not defined. ' +
+      'Please check your .env.local file or Vercel environment variables.'
+    );
   }
 
   clientInstance = createSupabaseClient(supabaseUrl, supabaseAnonKey, {

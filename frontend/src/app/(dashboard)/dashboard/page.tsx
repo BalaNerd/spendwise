@@ -7,7 +7,7 @@ import { AddExpenseForm } from '@/components/expenses/AddExpenseForm';
 import { ExpenseList } from '@/components/expenses/ExpenseList';
 import { SkeletonCard, SkeletonChart } from '@/components/ui/Skeleton';
 import { fetchApi } from '@/lib/api';
-import { formatCurrency, percentChange } from '@/lib/utils';
+import { formatCurrency, percentChange, cn } from '@/lib/utils';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
 import { useTheme } from 'next-themes';
 import { usePreferences } from '@/components/providers/PreferencesProvider';
@@ -205,96 +205,78 @@ export default function DashboardPage() {
 
       {/* Budget progress */}
       {monthlyBudget > 0 && (
-        <Card className={`${isDark ? '' : 'bg-white border-slate-200 shadow-sm'}`}>
+        <Card className="glass-card">
           <CardHeader>
-            <CardTitle className={isDark ? '' : 'text-slate-900'}>Budget progress</CardTitle>
-            <CardDescription className={isDark ? '' : 'text-slate-500'}>
+            <CardTitle className="text-xl font-bold tracking-tight">Budget Progress</CardTitle>
+            <CardDescription>
               {formatCurrency(total, currency)} of {formatCurrency(monthlyBudget, currency)} this month
             </CardDescription>
           </CardHeader>
-          <div className="space-y-2">
-            <div className={`h-3 rounded-full ${isDark ? 'bg-muted' : 'bg-slate-100'} overflow-hidden`}>
+          <div className="space-y-3">
+            <div className={`h-4 rounded-full ${isDark ? 'bg-muted/30' : 'bg-slate-200/50'} overflow-hidden p-0.5 border border-border/10`}>
               <motion.div
-                className={`h-full rounded-full ${isOverBudget ? 'bg-red-500' : budgetUsage >= 80 ? 'bg-amber-500' : 'bg-emerald-500'}`}
+                className={`h-full rounded-full ${isOverBudget ? 'bg-red-500 shadow-[0_0_15px_rgba(239,68,68,0.4)]' : budgetUsage >= 80 ? 'bg-amber-500 shadow-[0_0_15px_rgba(245,158,11,0.4)]' : 'bg-primary shadow-[0_0_15px_rgba(16,185,129,0.4)]'}`}
                 initial={{ width: 0 }}
                 animate={{ width: `${Math.min(100, budgetUsage)}%` }}
-                transition={{ duration: 0.6 }}
+                transition={{ duration: 1, ease: "circOut" }}
               />
             </div>
-            {isOverBudget && (
-              <p className="text-sm text-red-600 dark:text-red-400">
-                Over budget by {formatCurrency(total - monthlyBudget, currency)}
-              </p>
-            )}
-            {!isOverBudget && budgetUsage >= 80 && budgetUsage <= 100 && (
-              <p className="text-sm text-amber-600 dark:text-amber-400">
-                Approaching your monthly budget
-              </p>
-            )}
+            <div className="flex justify-between items-center">
+              {isOverBudget ? (
+                <p className="text-sm font-semibold text-red-500 flex items-center gap-1.5">
+                  <span className="h-2 w-2 rounded-full bg-red-500 animate-pulse" />
+                  Over budget by {formatCurrency(total - monthlyBudget, currency)}
+                </p>
+              ) : budgetUsage >= 80 ? (
+                <p className="text-sm font-semibold text-amber-500 flex items-center gap-1.5">
+                  <span className="h-2 w-2 rounded-full bg-amber-500 animate-pulse" />
+                  Approaching budget limit
+                </p>
+              ) : (
+                <p className="text-sm font-medium text-muted-foreground italic">
+                  Keep it up! You are within your budget.
+                </p>
+              )}
+              <span className="text-xs font-bold px-2 py-1 rounded-md bg-primary/10 text-primary">
+                {Math.round(budgetUsage)}%
+              </span>
+            </div>
           </div>
         </Card>
       )}
 
-      {/* Summary + Trend + Quick stats */}
-      <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-5 items-stretch">
-        <Card className={`h-full ${isDark ? '' : 'bg-white border-slate-200 shadow-sm'}`}>
-          <CardHeader>
-            <CardTitle className={isDark ? '' : 'text-slate-900'}>Total expenses</CardTitle>
-            <CardDescription className={isDark ? '' : 'text-slate-500'}>This month</CardDescription>
-          </CardHeader>
-          <p className={`text-3xl font-semibold ${isDark ? 'text-foreground' : 'text-slate-900'}`}>
-            {formatCurrency(totalExp, currency)}
-          </p>
-        </Card>
-        <Card className={`h-full ${isDark ? '' : 'bg-white border-slate-200 shadow-sm'}`}>
-          <CardHeader>
-            <CardTitle className={isDark ? '' : 'text-slate-900'}>Subscriptions</CardTitle>
-            <CardDescription className={isDark ? '' : 'text-slate-500'}>Monthly equivalent</CardDescription>
-          </CardHeader>
-          <p className={`text-3xl font-semibold ${isDark ? 'text-foreground' : 'text-slate-900'}`}>
-            {formatCurrency(totalSub, currency)}
-          </p>
-        </Card>
-        <Card className={`h-full ${isDark ? '' : 'bg-white border-slate-200 shadow-sm'}`}>
-          <CardHeader>
-            <CardTitle className={isDark ? '' : 'text-slate-900'}>Total spend</CardTitle>
-            <CardDescription className={isDark ? '' : 'text-slate-500'}>Expenses + subscriptions</CardDescription>
-          </CardHeader>
-          <p className={`text-3xl font-semibold ${isDark ? 'text-foreground' : 'text-slate-900'}`}>
-            {formatCurrency(total, currency)}
-          </p>
-        </Card>
-        <Card className={`h-full ${isDark ? '' : 'bg-white border-slate-200 shadow-sm'}`}>
-          <CardHeader>
-            <CardTitle className={isDark ? '' : 'text-slate-900'}>Vs last month</CardTitle>
-            <CardDescription className={isDark ? '' : 'text-slate-500'}>Expense trend</CardDescription>
-          </CardHeader>
-          {trend !== null ? (
-            <p
-              className={`text-2xl font-semibold ${
-                trend > 0 ? 'text-amber-600 dark:text-amber-400' : trend < 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-muted-foreground'
-              }`}
-            >
-              {trend > 0 ? '+' : ''}{trend}%
-            </p>
-          ) : (
-            <p className="text-2xl font-semibold text-muted-foreground">—</p>
-          )}
-        </Card>
-        <Card className={`h-full ${isDark ? '' : 'bg-white border-slate-200 shadow-sm'}`}>
-          <CardHeader>
-            <CardTitle className={isDark ? '' : 'text-slate-900'}>Avg daily</CardTitle>
-            <CardDescription className={isDark ? '' : 'text-slate-500'}>Spend per day</CardDescription>
-          </CardHeader>
-          <p className={`text-2xl font-semibold ${isDark ? 'text-foreground' : 'text-slate-900'}`}>
-            {formatCurrency(avgDaily, currency)}/day
-          </p>
-          {topCategory && (
-            <p className={`mt-1 text-xs ${isDark ? 'text-muted-foreground' : 'text-slate-500'}`}>
-              Top: {topCategory.category_name ?? 'Other'}
-            </p>
-          )}
-        </Card>
+      {/* Summary Stats Grid */}
+      <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-5">
+        {[
+          { title: 'Total Expenses', value: formatCurrency(totalExp, currency), desc: 'Direct spending', delay: 0.1 },
+          { title: 'Subscriptions', value: formatCurrency(totalSub, currency), desc: 'Fixed monthly', delay: 0.2 },
+          { title: 'Total Outflow', value: formatCurrency(total, currency), desc: 'Combined total', delay: 0.3, highlight: true },
+          { title: 'Trend', value: trend !== null ? `${trend > 0 ? '+' : ''}${trend}%` : '—', desc: 'Vs last month', delay: 0.4, trend: true },
+          { title: 'Daily Average', value: formatCurrency(avgDaily, currency), desc: 'Burn rate', delay: 0.5 },
+        ].map((stat, idx) => (
+          <motion.div
+            key={idx}
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ delay: stat.delay, duration: 0.4 }}
+          >
+            <Card className={cn("glass-card h-full flex flex-col justify-between", stat.highlight && "border-primary/30 bg-primary/5")}>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-bold text-muted-foreground uppercase tracking-wider">{stat.title}</CardTitle>
+              </CardHeader>
+              <div className="px-6 pb-6">
+                <p className={cn(
+                  "text-2xl font-black tracking-tight",
+                  stat.trend && trend !== null && (trend > 0 ? 'text-amber-500' : 'text-primary'),
+                  stat.highlight && "text-primary"
+                )}>
+                  {stat.value}
+                </p>
+                <p className="text-[10px] mt-1 font-medium text-muted-foreground/70">{stat.desc}</p>
+              </div>
+            </Card>
+          </motion.div>
+        ))}
       </div>
 
       {/* Category table */}
@@ -336,70 +318,77 @@ export default function DashboardPage() {
 
       {/* Charts + Insights */}
       <div className="grid gap-6 lg:grid-cols-2">
-        <Card className={`h-full ${isDark ? '' : 'bg-white border-slate-200 shadow-sm'}`}>
-          <CardHeader>
-            <CardTitle className={isDark ? '' : 'text-slate-900'}>Category distribution</CardTitle>
-            <CardDescription className={isDark ? '' : 'text-slate-500'}>Where your money goes</CardDescription>
-          </CardHeader>
-          {pieData.length > 0 ? (
-            <div className="h-[280px]">
-              <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
-                  <Pie
-                    data={pieData}
-                    cx="50%"
-                    cy="50%"
-                    innerRadius={70}
-                    outerRadius={100}
-                    paddingAngle={2}
-                    dataKey="value"
-                  >
-                    {pieData.map((entry, index) => {
-                      const key = entry.category_name?.toLowerCase() || '';
-                      const colors = resolvedTheme === 'light' ? lightColors : darkColors;
-                      const color =
-                        categoryColors[key] ||
-                        colors[index % colors.length];
-
-                      return <Cell key={`cell-${index}`} fill={color} />;
-                    })}
-                  </Pie>
-                  <Tooltip formatter={(v: number) => formatCurrency(v, currency)} />
-                </PieChart>
-              </ResponsiveContainer>
-            </div>
-          ) : (
-            <div className="h-[280px] flex items-center justify-center text-neutral-500">
-              No category data yet. Add expenses to see distribution.
-            </div>
-          )}
-        </Card>
-
-        <Card className={`h-full ${isDark ? '' : 'bg-white border-slate-200 shadow-sm'}`}>
-          <CardHeader>
-            <CardTitle className={isDark ? '' : 'text-slate-900'}>Smart insights</CardTitle>
-            <CardDescription className={isDark ? '' : 'text-slate-500'}>Data-driven observations</CardDescription>
-          </CardHeader>
-          <div className="space-y-4">
-            {insights.length > 0 ? (
-              insights.map((insight) => (
-                <motion.div
-                  key={insight.id}
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  className={`rounded-lg border p-4 ${isDark ? 'border-neutral-800 bg-neutral-800/30' : 'border-slate-200 bg-white'}`}
-                >
-                  <h4 className={`font-medium ${isDark ? 'text-white' : 'text-slate-900'}`}>{insight.title}</h4>
-                  <p className={`mt-1 text-sm ${isDark ? 'text-neutral-400' : 'text-slate-500'}`}>{insight.description}</p>
-                </motion.div>
-              ))
+        <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.6 }}>
+          <Card className="glass-card h-full">
+            <CardHeader>
+              <CardTitle className="text-xl font-bold">Category Distribution</CardTitle>
+              <CardDescription>Where your money goes</CardDescription>
+            </CardHeader>
+            {pieData.length > 0 ? (
+              <div className="h-[300px] mt-4">
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie
+                      data={pieData}
+                      cx="50%"
+                      cy="50%"
+                      innerRadius={80}
+                      outerRadius={110}
+                      paddingAngle={5}
+                      dataKey="value"
+                      stroke="none"
+                    >
+                      {pieData.map((entry, index) => {
+                        const key = entry.category_name?.toLowerCase() || '';
+                        const color = categoryColors[key] || fallbackColors[index % fallbackColors.length];
+                        return <Cell key={`cell-${index}`} fill={color} className="hover:opacity-80 transition-opacity cursor-pointer" />;
+                      })}
+                    </Pie>
+                    <Tooltip 
+                      contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }}
+                      formatter={(v: number) => [formatCurrency(v, currency), 'Total']}
+                    />
+                  </PieChart>
+                </ResponsiveContainer>
+              </div>
             ) : (
-              <p className={`text-sm ${isDark ? 'text-muted-foreground' : 'text-slate-500'}`}>
-                Add expenses to start receiving personalized insights.
-              </p>
+              <div className="h-[300px] flex items-center justify-center text-muted-foreground italic">
+                No category data yet.
+              </div>
             )}
-          </div>
-        </Card>
+          </Card>
+        </motion.div>
+
+        <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.7 }}>
+          <Card className="glass-card h-full">
+            <CardHeader>
+              <CardTitle className="text-xl font-bold">Smart Insights</CardTitle>
+              <CardDescription>Data-driven observations</CardDescription>
+            </CardHeader>
+            <div className="space-y-4 mt-4">
+              {insights.length > 0 ? (
+                insights.map((insight, idx) => (
+                  <motion.div
+                    key={insight.id}
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.8 + idx * 0.1 }}
+                    className="group rounded-xl border border-border/10 bg-primary/5 p-4 hover:bg-primary/10 transition-all duration-300"
+                  >
+                    <h4 className="font-bold text-foreground group-hover:text-primary transition-colors">{insight.title}</h4>
+                    <p className="mt-1 text-xs text-muted-foreground leading-relaxed">{insight.description}</p>
+                  </motion.div>
+                ))
+              ) : (
+                <div className="py-12 text-center">
+                  <p className="text-sm text-muted-foreground italic">
+                    Add expenses to unlock personalized insights.
+                  </p>
+                </div>
+              )}
+            </div>
+          </Card>
+        </motion.div>
       </div>
 
       {/* Expense list with Edit/Delete */}

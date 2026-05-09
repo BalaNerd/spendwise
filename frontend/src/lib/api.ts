@@ -43,7 +43,10 @@ export async function fetchApi(path: string, options?: RequestInit) {
       } catch {
         errBody = {};
       }
-      const errorMessage = (errBody as { error?: string; message?: string }).message || (errBody as { error?: string }).error || 'API error';
+      const errorMessage = 
+        (errBody as { error?: string; message?: string }).message || 
+        (errBody as { error?: string }).error || 
+        `API Error: ${res.status} ${res.statusText}`;
       throw new Error(errorMessage);
     }
 
@@ -58,13 +61,18 @@ export async function fetchApi(path: string, options?: RequestInit) {
     return res;
   } catch (error) {
     // Provide specific troubleshooting based on error type
-    if (error instanceof TypeError) {
-      if (error.message.includes('Failed to fetch')) {
-        throw new Error('Network connection failed. Please check:\n1. Backend server is running on http://localhost:4000\n2. No firewall blocking the connection\n3. Browser network settings allow localhost connections');
-      }
+    if (error instanceof TypeError && error.message.includes('Failed to fetch')) {
+      const isLocal = fullUrl.includes('localhost');
+      throw new Error(
+        `Network connection failed. ${
+          isLocal 
+            ? 'Please ensure your local backend is running on port 4000.' 
+            : 'The server could not be reached. Please check your internet connection or try again later.'
+        }`
+      );
     }
     
-    throw new Error(`Network error: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    throw error instanceof Error ? error : new Error('An unexpected network error occurred');
   }
 }
 

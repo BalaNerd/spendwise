@@ -21,7 +21,9 @@ import peopleRouter from './routes/people.js';
 
 if (!process.env.SUPABASE_URL || !process.env.SUPABASE_ANON_KEY) {
   console.error(
-    'Missing Supabase config. Set SUPABASE_URL and SUPABASE_ANON_KEY in backend/.env (get them from Supabase project Settings > API).'
+    'CRITICAL ERROR: Missing Supabase configuration.\n' +
+    'Please ensure SUPABASE_URL and SUPABASE_ANON_KEY are set in your environment variables.\n' +
+    'Get these from your Supabase Project Settings > API.'
   );
   process.exit(1);
 }
@@ -30,8 +32,23 @@ const app = express();
 const PORT = process.env.PORT || 4000;
 
 // Middleware
+// CORS configuration
+const allowedOrigins = process.env.CORS_ALLOWED_ORIGINS 
+  ? process.env.CORS_ALLOWED_ORIGINS.split(',').map(o => o.trim())
+  : ['http://localhost:3000', 'http://localhost:3001'];
+
 app.use(cors({ 
-  origin: ['http://localhost:3000', 'http://localhost:3001'], 
+  origin: (origin, callback) => {
+    // Allow requests with no origin (like mobile apps or curl requests)
+    if (!origin) return callback(null, true);
+    
+    if (allowedOrigins.indexOf(origin) !== -1 || allowedOrigins.includes('*')) {
+      callback(null, true);
+    } else {
+      console.warn(`CORS blocked for origin: ${origin}`);
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization']
